@@ -22,9 +22,23 @@ None
 Example Playbook
 ----------------
 
- - hosts: server
-   roles:
-   - xe0nic.ansible\_vprotect\_server
+Sample hosts inventory:
+
+```
+[all:vars]
+ansible\_user = root
+
+[server]
+192.168.1.2
+```
+
+Sample site.yml:
+
+```
+- hosts: server
+  roles:
+  - xe0nic.ansible\_vprotect\_server
+```
 
 License
 -------
