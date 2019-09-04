@@ -42,7 +42,7 @@
     update_cache: yes
 
 - name: Check if vProtect Server is configured
-  lineinfile: 
+  lineinfile:
     path: /opt/vprotect/payara.properties
     regexp: '^(eu.storware.vprotect.db.password=.*)'
     state: absent
@@ -81,12 +81,12 @@
     creates: "{{ ssl_keystore }}"
 
 - name: SSL - update keystore path
-  lineinfile: 
+  lineinfile:
     path: /opt/vprotect/payara.properties
     line: 'javax.net.ssl.keyStore={{ ssl_keystore }}'
     regexp: '^#?(javax.net.ssl.keyStore=.*)'
 
-- name: Changing ownership of the files in vProtect directory 
+- name: Changing ownership of the files in vProtect directory
   file:
     path: "/opt/vprotect"
     owner: vprotect
