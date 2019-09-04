@@ -26,7 +26,7 @@ Sample hosts inventory:
 
 ```
 [all:vars]
-ansible\_user = root
+ansible_user = root
 
 [server]
 192.168.1.2
@@ -37,7 +37,7 @@ Sample site.yml:
 ```
 - hosts: server
   roles:
-  - xe0nic.ansible\_vprotect\_server
+  - xe0nic.ansible_vprotect_server
 ```
 
 License
