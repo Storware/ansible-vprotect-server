@@ -1,0 +1,117 @@
+---
+
+- name: Setting up vProtect Server FQDN
+  set_fact:
+    server_fqdn: "{{ansible_nodename}}"
+  when: server_fqdn is undefined
+
+- name: Using the following vProtect Server FQDN
+  debug:
+    msg: "vProtect Server FQDN: {{server_fqdn}}"
+
+- name: Add MariaDB repository
+  yum_repository:
+    name: MariaDB
+    description: MariaDB 10.3 repository
+    baseurl: http://yum.mariadb.org/10.3/centos7-amd64
+    gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+    gpgcheck: yes
+
+- name: Add vProtect repository
+  yum_repository:
+    name: vProtect
+    description: Storware vProtect repo
+    baseurl: ftp://vprotect-repo.storware.eu/repo
+    gpgcheck: no
+
+- name: Update all packages
+  yum:
+    name: '*'
+    state: latest
+    update_cache: yes
+
+- name: Install expect
+  yum:
+    name: expect
+    state: latest
+
+- name: Install vProtect Server
+  yum:
+    name: vprotect-server
+    state: latest
+    update_cache: yes
+
+- name: Check if vProtect Server is configured
+  lineinfile: 
+    path: /opt/vprotect/payara.properties
+    regexp: '^(eu.storware.vprotect.db.password=.*)'
+    state: absent
+  check_mode: yes
+  register: configured
+  tags: configure
+
+- name: Configure vProtect Server
+  shell: |
+    set timeout 10
+    spawn vprotect-server-configure
+    expect "Set MySQL root password: "
+    send "{{db_password}}\n"
+    expect "Type password again: "
+    send "{{db_password}}\n"
+    expect eof
+    exit 0
+  args:
+    executable: /usr/bin/expect
+  when: "configured.changed == false"
+  tags: configure
+
+- name: SSL - generate key and certificate
+  command: 'openssl req -x509 -newkey rsa:4096 -keyout {{ssl_key}} -out {{ssl_crt}} -days 3650 -subj "/C=/ST=/L=/O=/CN={{server_fqdn}}" -passout pass:changeit'
+  args:
+    creates: "{{ssl_key}}"
+
+- name: SSL - create PKCS12 bundle from certificate and the key
+  command: 'openssl pkcs12 -export -in {{ssl_crt}} -inkey {{ssl_key}} -out {{ssl_p12}} -name vprotect -passin pass:changeit -passout pass:changeit'
+  args:
+    creates: "{{ssl_p12}}"
+
+- name: SSL - create a keystore for vProtect Server with PKCS12 bundle
+  command: 'keytool -importkeystore -destkeystore {{ssl_keystore}} -srckeystore {{ssl_p12}} -srcstoretype PKCS12 -alias vprotect -noprompt -srcstorepass changeit -storepass changeit'
+  args:
+    creates: "{{ssl_keystore}}"
+
+- name: SSL - update keystore path
+  lineinfile: 
+    path: /opt/vprotect/payara.properties
+    line: 'javax.net.ssl.keyStore={{ssl_keystore}}'
+    regexp: '^#?(javax.net.ssl.keyStore=.*)'
+
+- name: Changing ownership of the files in vProtect directory 
+  file:
+    path: "/opt/vprotect"
+    owner: vprotect
+    group: vprotect
+    recurse: yes
+
+- name: Start and enable vProtect Server service
+  service:
+    name: vprotect-server
+    daemon-reload: yes
+    state: started
+    enabled: yes
+
+- name: Firewall - open port 8181
+  firewalld:
+    port: 8181/tcp
+    zone: public
+    permanent: yes
+    immediate: yes
+    state: enabled
+
+- name: Firewall - redirect port 443 to 8181
+  firewalld:
+    rich_rule: "rule family=ipv4 forward-port port=443 protocol=tcp to-port=8181"
+    zone: public
+    permanent: yes
+    immediate: yes
+    state: enabled

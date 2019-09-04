@@ -1,0 +1,6 @@
+---
+db_password: "vPr0tect"
+ssl_key: "/opt/vprotect/vprotect.key"
+ssl_crt: "/opt/vprotect/vprotect.crt"
+ssl_p12: "/opt/vprotect/vprotect.p12"
+ssl_keystore: "/opt/vprotect/keystore.jks"
