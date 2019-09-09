@@ -30,10 +30,13 @@
     state: latest
     update_cache: yes
 
-- name: Install expect
+- name: Install expect and firewalld
   yum:
-    name: expect
+    name: "{{ item }}"
     state: latest
+  with_items:
+    - expect
+    - firewalld
 
 - name: Install vProtect Server
   yum:
@@ -96,6 +99,13 @@
 - name: Start and enable vProtect Server service
   service:
     name: vprotect-server
+    daemon-reload: yes
+    state: started
+    enabled: yes
+
+- name: Start and enable firewalld service
+  service:
+    name: firewalld
     daemon-reload: yes
     state: started
     enabled: yes
