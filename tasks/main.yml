@@ -32,11 +32,8 @@
 
 - name: Install expect and firewalld
   yum:
-    name: "{{ item }}"
+    name: ['expect', 'firewalld']
     state: latest
-  with_items:
-    - expect
-    - firewalld
 
 - name: Install vProtect Server
   yum:
