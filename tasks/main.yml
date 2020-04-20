@@ -12,9 +12,9 @@
 - name: Add MariaDB repository
   yum_repository:
     name: MariaDB
-    description: MariaDB 10.3 repository
-    baseurl: http://yum.mariadb.org/10.3/centos7-amd64
-    gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+    description: MariaDB repository
+    baseurl: "{{ mariadb_repo_url }}"
+    gpgkey: "{{ mariadb_repo_gpg_key }}"
     gpgcheck: yes
 
 - name: Add vProtect repository
