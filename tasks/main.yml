@@ -17,6 +17,14 @@
     gpgkey: "{{ mariadb_repo_gpg_key }}"
     gpgcheck: yes
 
+- name: Ensure MariaDB repository on CentOS/RHEL 8 has 'module_hotfixes' option enabled
+  ini_file:
+    path: /etc/yum.repos.d/MariaDB.repo
+    section: MariaDB
+    option: module_hotfixes
+    value: 1
+  when: ansible_distribution_major_version|int >= 8
+
 - name: Add vProtect repository
   yum_repository:
     name: vProtect
