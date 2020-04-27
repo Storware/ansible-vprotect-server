@@ -66,7 +66,7 @@
   tags: configure
 
 - name: SSL - generate key and certificate
-  command: 'openssl req -x509 -newkey rsa:4096 -keyout {{ ssl_key }} -out {{ ssl_crt }} -days 3650 -subj "/C=/ST=/L=/O=/CN={{ server_fqdn }}" -passout pass:changeit'
+  command: 'openssl req -x509 -newkey rsa:4096 -keyout {{ ssl_key }} -out {{ ssl_crt }} -days 3650 -subj "/CN={{ server_fqdn }}" -passout pass:changeit'
   args:
     creates: "{{ ssl_key }}"
 
