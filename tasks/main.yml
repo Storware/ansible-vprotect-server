@@ -91,6 +91,9 @@
     executable: /usr/bin/expect
   when: "configured.changed == false"
   tags: configure
+  
+  - name: Grant priviledges for vprotect to mysql database
+    command: mysql --user="root" --password="{{ db_password }}" -e "GRANT ALL PRIVILEGES ON mysql.* TO 'vprotect'@'localhost';"
 
 - name: SSL - generate key and certificate
   command: 'openssl req -x509 -newkey rsa:4096 -keyout {{ ssl_key }} -out {{ ssl_crt }} -days 3650 -subj "/CN={{ server_fqdn }}" -passout pass:changeit'
