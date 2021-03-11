@@ -21,8 +21,9 @@
   community.general.zypper_repository:
     name: MariaDB
     description: MariaDB repository
-    repo: https://yum.mariadb.org/10.5/sles/15/x86_64
-
+    repo: "{{ mariadb_suse_repo_url }}"
+    auto_import_keys: yes
+    
 - name: Ensure MariaDB repository on CentOS/RHEL 8 has 'module_hotfixes' option enabled
   ini_file:
     path: /etc/yum.repos.d/MariaDB.repo
