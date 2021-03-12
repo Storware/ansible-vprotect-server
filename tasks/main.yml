@@ -16,23 +16,26 @@
     baseurl: "{{ mariadb_repo_url }}"
     gpgkey: "{{ mariadb_repo_gpg_key }}"
     gpgcheck: yes
-    
+  when: ansible_facts['os_family'] != "Suse"
+  
 - name: Add MariaDB zypper repository
   community.general.zypper_repository:
     name: MariaDB
     description: MariaDB repository
     repo: "{{ mariadb_suse_repo_url }}"
-    
+  when: ansible_facts['os_family'] == "Suse"
+  
 - name: Import MariaDB GPG Key
     command: rpm --import {{ mariadb_repo_gpg_key }}
-    
+  when: ansible_facts['os_family'] == "Suse"
+  
 - name: Ensure MariaDB repository on CentOS/RHEL 8 has 'module_hotfixes' option enabled
   ini_file:
     path: /etc/yum.repos.d/MariaDB.repo
     section: MariaDB
     option: module_hotfixes
     value: "1"
-  when: ansible_distribution_major_version|int >= 8
+  when: ansible_distribution_major_version|int >= 8 and ansible_facts['os_family'] != "Suse"
 
 - name: Add vProtect yum repository
   yum_repository:
@@ -40,19 +43,22 @@
     description: vProtect repo
     baseurl: "{{ vprotect_repo }}"
     gpgcheck: no
-    
+  when: ansible_facts['os_family'] != "Suse"
+  
 - name: Add vProtect zypper repository
   community.general.zypper_repository:
     name: vProtect
     description: vProtect repo
     repo: "{{ vprotect_repo }}"
     disable_gpg_check: yes
-    
+  when: ansible_facts['os_family'] == "Suse"
+  
 - name: Update all yum packages
   yum:
     name: '*'
     state: latest
     update_cache: yes
+  when: ansible_facts['os_family'] != "Suse"
     
 - name: Update all zypper packages
   zypper:
@@ -60,7 +66,8 @@
     state: dist-upgrade
     update_cache: yes
     extra_args_precommand: "--gpg-auto-import-keys"
-
+  when: ansible_facts['os_family'] == "Suse"
+  
 - name: Install expect and firewalld
   yum:
     name: ['expect', 'firewalld']
@@ -96,9 +103,10 @@
   when: "configured.changed == false"
   tags: configure
   
-  - name: Grant priviledges for vprotect to mysql database
+- name: Grant priviledges for vprotect to mysql database
     command: mysql --user="root" --password="{{ db_password }}" -e "GRANT ALL PRIVILEGES ON mysql.* TO 'vprotect'@'localhost';"
-
+  when: ansible_facts['os_family'] == "Suse"
+  
 - name: SSL - generate key and certificate
   command: 'openssl req -x509 -newkey rsa:4096 -keyout {{ ssl_key }} -out {{ ssl_crt }} -days 3650 -subj "/CN={{ server_fqdn }}" -passout pass:changeit'
   args:
