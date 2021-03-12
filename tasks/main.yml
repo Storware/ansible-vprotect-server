@@ -22,7 +22,9 @@
     name: MariaDB
     description: MariaDB repository
     repo: "{{ mariadb_suse_repo_url }}"
-    auto_import_keys: yes
+    
+- name: Import MariaDB GPG Key
+    command: rpm --import {{ mariadb_repo_gpg_key }}
     
 - name: Ensure MariaDB repository on CentOS/RHEL 8 has 'module_hotfixes' option enabled
   ini_file:
@@ -55,8 +57,9 @@
 - name: Update all zypper packages
   zypper:
     name: '*'
-    state: latest
+    state: dist-upgrade
     update_cache: yes
+    extra_args_precommand: "--gpg-auto-import-keys"
 
 - name: Install expect and firewalld
   yum:
