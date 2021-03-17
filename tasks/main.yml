@@ -9,63 +9,12 @@
   debug:
     msg: "vProtect Server FQDN: {{ server_fqdn }}"
 
-- name: Add MariaDB yum repository
-  yum_repository:
-    name: MariaDB
-    description: MariaDB repository
-    baseurl: "{{ mariadb_repo_url }}"
-    gpgkey: "{{ mariadb_repo_gpg_key }}"
-    gpgcheck: yes
+- name: Add RH repositories and update packages
+  include_tasks: rh.yml
   when: ansible_facts['os_family'] != "Suse"
   
-- name: Add MariaDB zypper repository
-  community.general.zypper_repository:
-    name: MariaDB
-    description: MariaDB repository
-    repo: "{{ mariadb_suse_repo_url }}"
-  when: ansible_facts['os_family'] == "Suse"
-  
-- name: Import MariaDB GPG Key
-    command: rpm --import {{ mariadb_repo_gpg_key }}
-  when: ansible_facts['os_family'] == "Suse"
-  
-- name: Ensure MariaDB repository on CentOS/RHEL 8 has 'module_hotfixes' option enabled
-  ini_file:
-    path: /etc/yum.repos.d/MariaDB.repo
-    section: MariaDB
-    option: module_hotfixes
-    value: "1"
-  when: ansible_distribution_major_version|int >= 8 and ansible_facts['os_family'] != "Suse"
-
-- name: Add vProtect yum repository
-  yum_repository:
-    name: vProtect
-    description: vProtect repo
-    baseurl: "{{ vprotect_repo }}"
-    gpgcheck: no
-  when: ansible_facts['os_family'] != "Suse"
-  
-- name: Add vProtect zypper repository
-  community.general.zypper_repository:
-    name: vProtect
-    description: vProtect repo
-    repo: "{{ vprotect_repo }}"
-    disable_gpg_check: yes
-  when: ansible_facts['os_family'] == "Suse"
-  
-- name: Update all yum packages
-  yum:
-    name: '*'
-    state: latest
-    update_cache: yes
-  when: ansible_facts['os_family'] != "Suse"
-    
-- name: Update all zypper packages
-  zypper:
-    name: '*'
-    state: dist-upgrade
-    update_cache: yes
-    extra_args_precommand: "--gpg-auto-import-keys"
+- name: Add Suse repositories and update packages
+  include_tasks: suse.yml
   when: ansible_facts['os_family'] == "Suse"
   
 - name: Install expect and firewalld
