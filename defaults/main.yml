@@ -1,10 +1,12 @@
 ---
 mariadb_version: "10.4"
 mariadb_distro: "centos{{ ansible_distribution_major_version }}-amd64"
+mariadb_sles_distro: "sles{{ ansible_distribution_major_version }}-amd64"
 mariadb_repo_url: "http://yum.mariadb.org/{{ mariadb_version }}/{{ mariadb_distro }}"
-mariadb_suse_repo_url: "https://yum.mariadb.org/10.5/sles/15/x86_64"
+mariadb_sles_repo_url: "http://yum.mariadb.org/{{ mariadb_version }}/{{ mariadb_sles_distro }}"
 mariadb_repo_gpg_key: "https://yum.mariadb.org/RPM-GPG-KEY-MariaDB"
 vprotect_repo: "http://repo.storware.eu/vprotect/current/el{{ ansible_distribution_major_version }}"
+vprotect_sles_repo: "http://repo.storware.eu/vprotect/current/sles{{ ansible_distribution_major_version }}"
 db_password: "vPr0tect"
 ssl_key: "/opt/vprotect/vprotect.key"
 ssl_crt: "/opt/vprotect/vprotect.crt"

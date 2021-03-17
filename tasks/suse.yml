@@ -4,8 +4,7 @@
   community.general.zypper_repository:
     name: MariaDB
     description: MariaDB repository
-    repo: "{{ mariadb_suse_repo_url }}"
-  when: ansible_facts['os_family'] == "Suse"
+    repo: "{{ mariadb_sles_repo_url }}"
   
 - name: Import MariaDB GPG Key
   command: rpm --import {{ mariadb_repo_gpg_key }}
@@ -14,7 +13,7 @@
   community.general.zypper_repository:
     name: vProtect
     description: vProtect repo
-    repo: "{{ vprotect_repo }}"
+    repo: "{{ vprotect_sles_repo }}"
     disable_gpg_check: yes
     
 - name: Update all zypper packages
