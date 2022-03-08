@@ -1,13 +1,13 @@
 ---
 
-- name: Setting up vProtect Server FQDN
+- name: Set the Server FQDN variable
   set_fact:
     server_fqdn: "{{ ansible_nodename }}"
   when: server_fqdn is undefined
 
-- name: Using the following vProtect Server FQDN
+- name: Show the Server FQDN variable
   debug:
-    msg: "vProtect Server FQDN: {{ server_fqdn }}"
+    msg: "Server FQDN: {{ server_fqdn }}"
 
 - name: Add MariaDB repository
   yum_repository:
@@ -25,7 +25,7 @@
     value: "1"
   when: ansible_distribution_major_version|int >= 8
 
-- name: Add vProtect repository
+- name: Add package repository
   yum_repository:
     name: vProtect
     description: vProtect repo
@@ -43,13 +43,13 @@
     name: ['expect', 'firewalld']
     state: latest
 
-- name: Install vProtect Server
+- name: Install the Server
   yum:
     name: vprotect-server
     state: latest
     update_cache: yes
 
-- name: Check if vProtect Server is configured
+- name: Check if Server is configured
   lineinfile:
     path: /opt/vprotect/payara.properties
     regexp: '^(eu.storware.vprotect.db.password=.*)'
@@ -58,7 +58,7 @@
   register: configured
   tags: configure
 
-- name: Configure vProtect Server
+- name: Configure the Server
   shell: |
     set timeout 10
     spawn vprotect-server-configure
@@ -94,14 +94,14 @@
     line: 'javax.net.ssl.keyStore={{ ssl_keystore }}'
     regexp: '^#?(javax.net.ssl.keyStore=.*)'
 
-- name: Changing ownership of the files in vProtect directory
+- name: Changing ownership of the files in the installation directory
   file:
     path: "/opt/vprotect"
     owner: vprotect
     group: vprotect
     recurse: yes
 
-- name: Start and enable vProtect Server service
+- name: Start and enable the Server service
   service:
     name: vprotect-server
     daemon-reload: yes
@@ -130,3 +130,33 @@
     permanent: yes
     immediate: yes
     state: enabled
+
+- name: Login to the Server
+  uri:
+    url: "https://localhost:8181/api/session/login"
+    method: POST
+    body_format: json
+    validate_certs: false
+    return_content: true
+    body:
+      login: "admin"
+      password: "{{ orig_admin_pass }}"
+    status_code: [200, 400]
+  register: resp_login
+
+- name: Change the default admin password
+  uri:
+    url: "https://localhost:8181/api/users/1/password"
+    method: PUT
+    body_format: json
+    validate_certs: false
+    headers:
+      Cookie: "{{ resp_login.cookies_string }}"
+    body:
+      value: "{{ admin_pass }}"
+    status_code: 204
+  when: "resp_login.status == 200 and orig_admin_pass != admin_pass"
+
+- name: Set admin password fact variable
+  set_fact:
+    admin_pass: "{{ admin_pass }}"
