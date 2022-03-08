@@ -52,7 +52,7 @@
 - name: Check if Server is configured
   lineinfile:
     path: /opt/vprotect/payara.properties
-    regexp: '^(eu.storware.vprotect.db.password=.*)'
+    regexp: '^(.*.vprotect.db.password=.*)'
     state: absent
   check_mode: yes
   register: configured
@@ -63,9 +63,9 @@
     set timeout 10
     spawn vprotect-server-configure
     expect "Set MySQL root password: "
-    send "{{ db_password }}\n"
+    send "{{ db_pass }}\n"
     expect "Type password again: "
-    send "{{ db_password }}\n"
+    send "{{ db_pass }}\n"
     expect eof
     exit 0
   args:
