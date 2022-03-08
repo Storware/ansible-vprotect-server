@@ -52,7 +52,7 @@
 - name: Check if Server is configured
   lineinfile:
     path: /opt/vprotect/payara.properties
-    regexp: '^(.*.vprotect.db.password=.*)'
+    regexp: '^([^#]*.vprotect.db.password=.*)'
     state: absent
   check_mode: yes
   register: configured
