@@ -142,6 +142,7 @@
       login: "admin"
       password: "{{ orig_admin_pass }}"
     status_code: [200, 400]
+  until: resp_login is succeeded
   retries: 60
   delay: 5
   register: resp_login
