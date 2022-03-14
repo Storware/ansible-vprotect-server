@@ -142,9 +142,9 @@
       login: "admin"
       password: "{{ orig_admin_pass }}"
     status_code: [200, 400]
-  until: resp_login is succeeded
   retries: 60
   delay: 5
+  until: resp_login is succeeded
   register: resp_login
 
 - name: Change the default admin password
