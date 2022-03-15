@@ -146,6 +146,8 @@
   delay: 5
   until: resp_login is succeeded
   register: resp_login
+  environment:
+    NO_PROXY: "localhost,127.0.0.1"
 
 - name: Change the default admin password
   uri:
@@ -159,6 +161,8 @@
       value: "{{ admin_pass }}"
     status_code: 204
   when: "resp_login.status == 200 and orig_admin_pass != admin_pass"
+  environment:
+    NO_PROXY: "localhost,127.0.0.1"
 
 - name: Set admin password fact variable
   set_fact:
