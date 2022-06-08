@@ -32,12 +32,6 @@
     baseurl: "{{ vprotect_repo }}"
     gpgcheck: no
 
-- name: Update all packages
-  yum:
-    name: '*'
-    state: latest
-    update_cache: yes
-
 - name: Install expect and firewalld
   yum:
     name: ['expect', 'firewalld']
