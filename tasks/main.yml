@@ -7,7 +7,6 @@
 
 - name: Show the Server FQDN variable
   debug:
-    msg: "Server FQDN: {{ server_fqdn }}"
 
 - name: Add MariaDB repository
   yum_repository:
@@ -16,6 +15,7 @@
     baseurl: "{{ mariadb_repo_url }}"
     gpgkey: "{{ mariadb_repo_gpg_key }}"
     gpgcheck: yes
+  when: mariadb_add_repo
 
 - name: Ensure MariaDB repository on CentOS/RHEL 8 has 'module_hotfixes' option enabled
   ini_file:
@@ -23,7 +23,7 @@
     section: MariaDB
     option: module_hotfixes
     value: "1"
-  when: ansible_distribution_major_version|int >= 8
+  when: mariadb_add_repo and ansible_distribution_file_variety == 'RedHat' and ansible_distribution_major_version|int >= 8
 
 - name: Add package repository
   yum_repository:
