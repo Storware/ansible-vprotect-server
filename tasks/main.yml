@@ -7,6 +7,7 @@
 
 - name: Show the Server FQDN variable
   debug:
+    msg: "Server FQDN: {{ server_fqdn }}"
 
 - name: Add MariaDB repository
   yum_repository:
