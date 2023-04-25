@@ -1,6 +1,6 @@
 ---
 
-- name: Set the Server FQDN variable for server
+- name: Set the Server FQDN variable for the server
   set_fact:
     server_fqdn: "{{ ansible_nodename }}"
   when: server_fqdn is undefined
@@ -8,9 +8,7 @@
 - name: Set the Server FQDN variable for the nodes
   set_fact:
     server_fqdn: "{{ server_fqdn }}"
-  delegate_to: "{{ item }}"
-  loop: "{{ groups['nodes'] }}"
-  when: groups['nodes'] is defined
+  delegate_to: localhost
 
 - name: Show the Server FQDN variable
   debug:
