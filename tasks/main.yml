@@ -9,6 +9,7 @@
   set_fact:
     server_fqdn: "{{ server_fqdn }}"
   delegate_to: localhost
+  delegate_facts: true
 
 - name: Show the Server FQDN variable
   debug:
