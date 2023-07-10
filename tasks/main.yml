@@ -22,11 +22,12 @@
     baseurl: "{{ mariadb_repo_url }}"
     gpgkey: "{{ mariadb_repo_gpg_key }}"
     gpgcheck: yes
+    reposdir: "{{ package_repos_dir }}"
   when: mariadb_add_repo
 
 - name: Ensure MariaDB repository on CentOS/RHEL 8 has 'module_hotfixes' option enabled
   ini_file:
-    path: /etc/yum.repos.d/MariaDB.repo
+    path: "{{ package_repos_dir }}/MariaDB.repo"
     section: MariaDB
     option: module_hotfixes
     value: "1"
@@ -38,6 +39,7 @@
     description: vProtect repo
     baseurl: "{{ vprotect_repo }}"
     gpgcheck: no
+    reposdir: "{{ package_repos_dir }}"
 
 - name: Install expect and firewalld
   yum:
