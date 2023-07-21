@@ -66,9 +66,9 @@
     set timeout 10
     spawn vprotect-server-configure
     expect "Set MySQL root password: "
-    send "{{ db_pass }}\n"
+    send "{{ db_pass | quote }}\n"
     expect "Type password again: "
-    send "{{ db_pass }}\n"
+    send "{{ db_pass | quote }}\n"
     expect eof
     exit 0
   args:
