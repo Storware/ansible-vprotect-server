@@ -1,22 +1,22 @@
 ---
 
 - name: Set the Server FQDN variable for the server
-  set_fact:
+  ansible.builtin.set_fact:
     server_fqdn: "{{ ansible_nodename }}"
   when: server_fqdn is undefined
 
 - name: Set the Server FQDN variable for the nodes
-  set_fact:
+  ansible.builtin.set_fact:
     server_fqdn: "{{ server_fqdn }}"
   delegate_to: localhost
   delegate_facts: true
 
 - name: Show the Server FQDN variable
-  debug:
+  ansible.builtin.debug:
     msg: "Server FQDN: {{ server_fqdn }}"
 
 - name: Add MariaDB repository
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: MariaDB
     description: MariaDB repository
     baseurl: "{{ mariadb_repo_url }}"
@@ -26,7 +26,7 @@
   when: mariadb_add_repo
 
 - name: Ensure MariaDB repository on CentOS/RHEL 8 has 'module_hotfixes' option enabled
-  ini_file:
+  community.general.ini_file:
     path: "{{ package_repos_dir }}/MariaDB.repo"
     section: MariaDB
     option: module_hotfixes
@@ -34,7 +34,7 @@
   when: mariadb_add_repo and ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 8
 
 - name: Add package repository
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: vProtect
     description: vProtect repo
     baseurl: "{{ vprotect_repo }}"
@@ -42,18 +42,18 @@
     reposdir: "{{ package_repos_dir }}"
 
 - name: Install expect and firewalld
-  yum:
+  ansible.builtin.yum:
     name: ['expect', 'firewalld']
     state: latest
 
 - name: Install the Server
-  yum:
+  ansible.builtin.yum:
     name: vprotect-server
     state: latest
     update_cache: yes
 
 - name: Check if Server is configured
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /opt/vprotect/payara.properties
     regexp: '^([^#]*.vprotect.db.password=.*)'
     state: absent
@@ -62,7 +62,7 @@
   tags: configure
 
 - name: Configure the Server
-  shell: |
+  ansible.builtin.shell: |
     set timeout 10
     spawn vprotect-server-configure
     expect "Set MySQL root password: "
@@ -77,49 +77,49 @@
   tags: configure
 
 - name: SSL - generate key and certificate
-  command: 'openssl req -x509 -newkey rsa:4096 -keyout {{ ssl_key }} -out {{ ssl_crt }} -days 3650 -subj "/CN={{ server_fqdn }}" -passout pass:changeit'
+  ansible.builtin.command: 'openssl req -x509 -newkey rsa:4096 -keyout {{ ssl_key }} -out {{ ssl_crt }} -days 3650 -subj "/CN={{ server_fqdn }}" -passout pass:changeit'
   args:
     creates: "{{ ssl_key }}"
 
 - name: SSL - create PKCS12 bundle from certificate and the key
-  command: 'openssl pkcs12 -export -in {{ ssl_crt }} -inkey {{ ssl_key }} -out {{ ssl_p12 }} -name vprotect -passin pass:changeit -passout pass:changeit'
+  ansible.builtin.command: 'openssl pkcs12 -export -in {{ ssl_crt }} -inkey {{ ssl_key }} -out {{ ssl_p12 }} -name vprotect -passin pass:changeit -passout pass:changeit'
   args:
     creates: "{{ ssl_p12 }}"
 
 - name: SSL - create a keystore for vProtect Server with PKCS12 bundle
-  command: 'keytool -importkeystore -destkeystore {{ ssl_keystore }} -srckeystore {{ ssl_p12 }} -srcstoretype PKCS12 -alias vprotect -noprompt -srcstorepass changeit -storepass changeit'
+  ansible.builtin.command: 'keytool -importkeystore -destkeystore {{ ssl_keystore }} -srckeystore {{ ssl_p12 }} -srcstoretype PKCS12 -alias vprotect -noprompt -srcstorepass changeit -storepass changeit'
   args:
     creates: "{{ ssl_keystore }}"
 
 - name: SSL - update keystore path
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /opt/vprotect/payara.properties
     line: 'javax.net.ssl.keyStore={{ ssl_keystore }}'
     regexp: '^#?(javax.net.ssl.keyStore=.*)'
 
 - name: Changing ownership of the files in the installation directory
-  file:
+  ansible.builtin.file:
     path: "/opt/vprotect"
     owner: vprotect
     group: vprotect
     recurse: yes
 
 - name: Start and enable the Server service
-  service:
+  ansible.builtin.service:
     name: vprotect-server
     daemon-reload: yes
     state: started
     enabled: yes
 
 - name: Start and enable firewalld service
-  service:
+  ansible.builtin.service:
     name: firewalld
     daemon-reload: yes
     state: started
     enabled: yes
 
 - name: Firewall - open port 8181
-  firewalld:
+  ansible.builtin.firewalld:
     port: 8181/tcp
     zone: public
     permanent: yes
@@ -127,7 +127,7 @@
     state: enabled
 
 - name: Firewall - redirect port 443 to 8181
-  firewalld:
+  ansible.posix.firewalld:
     rich_rule: "rule family=ipv4 forward-port port=443 protocol=tcp to-port=8181"
     zone: public
     permanent: yes
@@ -135,7 +135,7 @@
     state: enabled
 
 - name: Login to the Server
-  uri:
+  ansible.builtin.uri:
     url: "https://localhost:8181/api/session/login"
     method: POST
     body_format: json
@@ -153,7 +153,7 @@
     NO_PROXY: "localhost,127.0.0.1"
 
 - name: Change the default admin password
-  uri:
+  ansible.builtin.uri:
     url: "https://localhost:8181/api/users/1/password"
     method: PUT
     body_format: json
@@ -168,5 +168,5 @@
     NO_PROXY: "localhost,127.0.0.1"
 
 - name: Set admin password fact variable
-  set_fact:
+  ansible.builtin.set_fact:
     admin_pass: "{{ admin_pass }}"
