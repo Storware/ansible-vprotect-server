@@ -105,14 +105,14 @@
     recurse: yes
 
 - name: Start and enable the Server service
-  service:
+  systemd:
     name: vprotect-server
     daemon-reload: yes
     state: started
     enabled: yes
 
 - name: Start and enable firewalld service
-  service:
+  systemd:
     name: firewalld
     daemon-reload: yes
     state: started
