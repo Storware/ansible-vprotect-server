@@ -105,14 +105,14 @@
     recurse: yes
 
 - name: Start and enable the Server service
-  ansible.builtin.systemd_service:
+  ansible.builtin.service:
     name: vprotect-server
     daemon-reload: yes
     state: started
     enabled: yes
 
 - name: Start and enable firewalld service
-  ansible.builtin.systemd_service:
+  ansible.builtin.service:
     name: firewalld
     daemon-reload: yes
     state: started
