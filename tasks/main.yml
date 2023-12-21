@@ -33,21 +33,34 @@
     value: "1"
   when: mariadb_add_repo and ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 8
 
-- name: Add package repository
+- name: Add package repository (Red Hat/SUSE)
   yum_repository:
     name: vProtect
     description: vProtect repo
     baseurl: "{{ vprotect_repo }}"
     gpgcheck: no
     reposdir: "{{ package_repos_dir }}"
+  when: ansible_os_family == 'RedHat' or ansible_os_family == 'Suse'
+
+- name: Add package repository (Debian/Ubuntu)
+  apt_repository:
+    repo: "deb [trusted=yes] {{ vprotect_repo }} ./"
+  when: ansible_os_family == 'Debian'
+
+- name: Install python3-apt package (Debian/Ubuntu)
+  apt:
+    name: python3-apt
+    state: latest
+  when: ansible_os_family == 'Debian'
 
 - name: Install expect and firewalld
-  yum:
+  package:
     name: ['expect', 'firewalld']
     state: latest
 
+
 - name: Install the Server
-  yum:
+  package:
     name: vprotect-server
     state: latest
     update_cache: yes
