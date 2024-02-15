@@ -59,10 +59,10 @@
 
 - name: Check if quarkus.properties file exists
   stat:
-    path: /opt/vprotect/server/payara.properties
+    path: /opt/vprotect/server/quarkus.properties
   register: quarkus_file
 
-- name: Check if Server is configured (payara)
+- name: Check if Server is configured (Payara)
   lineinfile:
     path: /opt/vprotect/payara.properties
     regexp: '^([^#]*.vprotect.db.password=.*)'
@@ -71,7 +71,7 @@
   register: payara_configured
   when: payara_file.stat.exists
 
-- name: Check if Server is configured (quarkus)
+- name: Check if Server is configured (Quarkus)
   lineinfile:
     path: /opt/vprotect/quarkus.properties
     regexp: '^([^#]quarkus.datasource.password=.*)'
