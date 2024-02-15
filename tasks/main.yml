@@ -52,14 +52,33 @@
     state: latest
     update_cache: yes
 
-- name: Check if Server is configured
+- name: Check if payara.properties file exists
+  stat:
+    path: /opt/vprotect/payara.properties
+  register: payara_file
+
+- name: Check if quarkus.properties file exists
+  stat:
+    path: /opt/vprotect/server/payara.properties
+  register: quarkus_file
+
+- name: Check if Server is configured (payara)
   lineinfile:
     path: /opt/vprotect/payara.properties
     regexp: '^([^#]*.vprotect.db.password=.*)'
     state: absent
   check_mode: yes
-  register: configured
-  tags: configure
+  register: payara_configured
+  when: payara_file.stat.exists
+
+- name: Check if Server is configured (quarkus)
+  lineinfile:
+    path: /opt/vprotect/quarkus.properties
+    regexp: '^([^#]quarkus.datasource.password=.*)'
+    state: absent
+  check_mode: yes
+  register: quarkus_configured
+  when: quarkus_file.stat.exists
 
 - name: Configure the Server
   shell: |
@@ -73,8 +92,9 @@
     exit 0
   args:
     executable: /usr/bin/expect
-  when: "configured.changed == false"
-  tags: configure
+  when:
+    - payara_file.stat.exists or quarkus_file.stat.exists
+    - payara_configured.changed == false or quarkus_configured.changed == false
 
 - name: SSL - generate key and certificate
   command: 'openssl req -x509 -newkey rsa:4096 -keyout {{ ssl_key }} -out {{ ssl_crt }} -days 3650 -subj "/CN={{ server_fqdn }}" -passout pass:changeit'
