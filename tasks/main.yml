@@ -52,14 +52,33 @@
     state: latest
     update_cache: yes
 
-- name: Check if Server is configured
+- name: Check if payara.properties file exists
+  stat:
+    path: /opt/vprotect/payara.properties
+  register: payara_file
+
+- name: Check if quarkus.properties file exists
+  stat:
+    path: /opt/vprotect/server/quarkus.properties
+  register: quarkus_file
+
+- name: Check if Server is configured (Payara)
   lineinfile:
     path: /opt/vprotect/payara.properties
     regexp: '^([^#]*.vprotect.db.password=.*)'
     state: absent
   check_mode: yes
-  register: configured
-  tags: configure
+  register: payara_configured
+  when: payara_file.stat.exists
+
+- name: Check if Server is configured (Quarkus)
+  lineinfile:
+    path: /opt/vprotect/server/quarkus.properties
+    regexp: '^([^#]quarkus.datasource.password=.*)'
+    state: absent
+  check_mode: yes
+  register: quarkus_configured
+  when: quarkus_file.stat.exists
 
 - name: Configure the Server
   shell: |
@@ -73,8 +92,9 @@
     exit 0
   args:
     executable: /usr/bin/expect
-  when: "configured.changed == false"
-  tags: configure
+  when:
+    - payara_file.stat.exists or quarkus_file.stat.exists
+    - payara_configured.changed == false or quarkus_configured.changed == false
 
 - name: SSL - generate key and certificate
   command: 'openssl req -x509 -newkey rsa:4096 -keyout {{ ssl_key }} -out {{ ssl_crt }} -days 3650 -subj "/CN={{ server_fqdn }}" -passout pass:changeit'
@@ -91,11 +111,19 @@
   args:
     creates: "{{ ssl_keystore }}"
 
-- name: SSL - update keystore path
+- name: SSL - update keystore path (Payara)
   lineinfile:
     path: /opt/vprotect/payara.properties
     line: 'javax.net.ssl.keyStore={{ ssl_keystore }}'
     regexp: '^#?(javax.net.ssl.keyStore=.*)'
+  when: payara_file.stat.exists
+
+- name: SSL - update keystore path (Quarkus)
+  lineinfile:
+    path: /opt/vprotect/server/quarkus.properties
+    line: 'javax.net.ssl.keyStore={{ ssl_keystore }}'
+    regexp: '^#?(javax.net.ssl.keyStore=.*)'
+  when: quarkus_file.stat.exists
 
 - name: Changing ownership of the files in the installation directory
   file:
