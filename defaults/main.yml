@@ -1,10 +1,14 @@
 ---
 package_repos_dir: "{{ (ansible_os_family == 'Suse')|ternary('/etc/zypp/repos.d','/etc/yum.repos.d') }}"
-mariadb_add_repo: "{{ not (ansible_os_family == 'Suse' or ansible_os_family == 'Debian') }}"
+mariadb_add_repo: "{{ true | bool }}"
 mariadb_version: "10.11"
-mariadb_distro: "centos"
-mariadb_repo_url: "http://mirror.mariadb.org/yum/{{ mariadb_version }}/{{ mariadb_distro }}/{{ ansible_distribution_major_version }}/x86_64"
-mariadb_repo_gpg_key: "https://yum.mariadb.org/RPM-GPG-KEY-MariaDB"
+mariadb_distro_release: "{{ ansible_distribution_release }}"
+mariadb_repo_url_dict:
+  RedHat: "{{ (ansible_distribution == 'CentOS')|ternary('https://rpm.mariadb.org/' + mariadb_version + '/centos/' + ansible_distribution_major_version + '/x86_64','https://rpm.mariadb.org/' + mariadb_version + '/rhel/' + ansible_distribution_major_version + '/x86_64') }}"
+  Suse: "{{ (ansible_distribution == 'SLES')|ternary('https://rpm.mariadb.org/' + mariadb_version + '/sles/' + ansible_distribution_major_version + '/x86_64','https://rpm.mariadb.org/' + mariadb_version + '/opensuse/' + ansible_distribution_major_version + '/x86_64') }}"
+  Debian: "https://deb.mariadb.org/{{ mariadb_version }}/{{ ansible_distribution | lower }}"
+mariadb_repo_url: "{{ mariadb_repo_url_dict[ansible_os_family] }}"
+mariadb_repo_gpg_key: "https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB"
 vprotect_repo: "http://repo.storware.eu/storware/current/el{{ ansible_distribution_major_version }}"
 db_pass: "vPr0tect"
 orig_admin_pass: "vPr0tect"
