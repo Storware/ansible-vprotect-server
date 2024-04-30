@@ -1,7 +1,7 @@
 ---
 package_repos_dir: "{{ (ansible_os_family == 'Suse')|ternary('/etc/zypp/repos.d','/etc/yum.repos.d') }}"
-mariadb_add_repo: "{{ not ((ansible_os_family == 'RedHat' and ansible_distribution_major_version|int == 9) or ansible_os_family == 'Suse' or ansible_os_family == 'Debian') }}"
-mariadb_version: "10.6"
+mariadb_add_repo: "{{ not ((ansible_os_family == 'Suse' or ansible_os_family == 'Debian') }}"
+mariadb_version: "10.11"
 mariadb_distro: "centos"
 mariadb_repo_url: "http://mirror.mariadb.org/yum/{{ mariadb_version }}/{{ mariadb_distro }}/{{ ansible_distribution_major_version }}/x86_64"
 mariadb_repo_gpg_key: "https://yum.mariadb.org/RPM-GPG-KEY-MariaDB"
