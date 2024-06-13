@@ -63,6 +63,13 @@
     repo: "deb [trusted=yes] {{ vprotect_repo }} ./"
   when: ansible_os_family == 'Debian'
 
+- name: Wait for dpkg lock to be released (Debian/Ubuntu)
+  wait_for:
+    path: /var/lib/dpkg/lock-frontend
+    state: absent
+    timeout: 600
+  when: ansible_os_family == 'Debian'
+
 - name: Install python3-apt package (Debian/Ubuntu)
   apt:
     name: python3-apt
@@ -73,7 +80,6 @@
   package:
     name: ['expect', 'firewalld']
     state: latest
-
 
 - name: Install the Server
   package:
