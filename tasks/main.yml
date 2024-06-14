@@ -18,7 +18,7 @@
 - name: Show the MariaDB repo URL (if external)
   debug:
     msg: "MariaDB repo URL: {{ mariadb_repo_url }}"
-  when: mariadb_add_repo
+  when: mariadb_add_repo | bool
 
 - name: Add MariaDB repository (Red Hat/SUSE)
   yum_repository:
@@ -28,18 +28,18 @@
     gpgkey: "{{ mariadb_repo_gpg_key }}"
     gpgcheck: yes
     reposdir: "{{ package_repos_dir }}"
-  when: mariadb_add_repo and (ansible_os_family == 'RedHat' or ansible_os_family == 'Suse')
+  when: (mariadb_add_repo | bool) and (ansible_os_family == 'RedHat' or ansible_os_family == 'Suse')
 
 - name: Import the MariaDB repository key (Red Hat/SUSE)
   rpm_key:
     state: present
     key: "{{ mariadb_repo_gpg_key }}"
-  when: mariadb_add_repo and (ansible_os_family == 'RedHat' or ansible_os_family == 'Suse')
+  when: (mariadb_add_repo | bool) and (ansible_os_family == 'RedHat' or ansible_os_family == 'Suse')
 
 - name: Add MariaDB repository (Debian/Ubuntu)
   apt_repository:
     repo: "deb [trusted=yes] {{ mariadb_repo_url }} {{ mariadb_distro_release }} main"
-  when: mariadb_add_repo and ansible_os_family == 'Debian'
+  when: (mariadb_add_repo | bool) and ansible_os_family == 'Debian'
 
 - name: Ensure MariaDB repository on CentOS/RHEL 8 has 'module_hotfixes' option enabled
   ini_file:
@@ -47,7 +47,7 @@
     section: MariaDB
     option: module_hotfixes
     value: "1"
-  when: mariadb_add_repo and ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 8
+  when: (mariadb_add_repo | bool) and ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 8
 
 - name: Add package repository (Red Hat/SUSE)
   yum_repository:
