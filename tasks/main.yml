@@ -174,21 +174,27 @@
     state: started
     enabled: yes
 
+- name: Check if port 8181 is already open
+  command: firewall-cmd --zone=public --query-port=8181/tcp
+  register: firewall_check_port_8181
+  ignore_errors: yes
+
 - name: Firewall - open port 8181
-  firewalld:
-    port: 8181/tcp
-    zone: public
-    permanent: yes
-    immediate: yes
-    state: enabled
+  command: firewall-cmd --zone=public --add-port=8181/tcp --permanent
+  when: firewall_check_port_8181.rc != 0
+  register: firewall_open_port_8181
+  notify: Reload firewalld
+
+- name: Check if port forwarding from 443 to 8181 is already set
+  command: firewall-cmd --zone=public --query-rich-rule='rule family=ipv4 forward-port port=443 protocol=tcp to-port=8181'
+  register: firewall_check_forward_443_to_8181
+  ignore_errors: yes
 
 - name: Firewall - redirect port 443 to 8181
-  firewalld:
-    rich_rule: "rule family=ipv4 forward-port port=443 protocol=tcp to-port=8181"
-    zone: public
-    permanent: yes
-    immediate: yes
-    state: enabled
+  command: firewall-cmd --zone=public --add-rich-rule='rule family=ipv4 forward-port port=443 protocol=tcp to-port=8181' --permanent
+  when: firewall_check_forward_443_to_8181.rc != 0
+  register: firewall_redirect_port_443_to_8181
+  notify: Reload firewalld
 
 - name: Login to the Server
   uri:
