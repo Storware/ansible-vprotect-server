@@ -15,7 +15,12 @@
   debug:
     msg: "Server FQDN: {{ server_fqdn }}"
 
-- name: Add MariaDB repository
+- name: Show the MariaDB repo URL (if external)
+  debug:
+    msg: "MariaDB repo URL: {{ mariadb_repo_url }}"
+  when: mariadb_add_repo | bool
+
+- name: Add MariaDB repository (Red Hat/SUSE)
   yum_repository:
     name: MariaDB
     description: MariaDB repository
@@ -23,7 +28,18 @@
     gpgkey: "{{ mariadb_repo_gpg_key }}"
     gpgcheck: yes
     reposdir: "{{ package_repos_dir }}"
-  when: mariadb_add_repo
+  when: (mariadb_add_repo | bool) and (ansible_os_family == 'RedHat' or ansible_os_family == 'Suse')
+
+- name: Import the MariaDB repository key (Red Hat/SUSE)
+  rpm_key:
+    state: present
+    key: "{{ mariadb_repo_gpg_key }}"
+  when: (mariadb_add_repo | bool) and (ansible_os_family == 'RedHat' or ansible_os_family == 'Suse')
+
+- name: Add MariaDB repository (Debian/Ubuntu)
+  apt_repository:
+    repo: "deb [trusted=yes] {{ mariadb_repo_url }} {{ mariadb_distro_release }} main"
+  when: (mariadb_add_repo | bool) and ansible_os_family == 'Debian'
 
 - name: Ensure MariaDB repository on CentOS/RHEL 8 has 'module_hotfixes' option enabled
   ini_file:
@@ -31,23 +47,35 @@
     section: MariaDB
     option: module_hotfixes
     value: "1"
-  when: mariadb_add_repo and ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 8
+  when: (mariadb_add_repo | bool) and ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 8
 
-- name: Add package repository
+- name: Add package repository (Red Hat/SUSE)
   yum_repository:
     name: vProtect
     description: vProtect repo
     baseurl: "{{ vprotect_repo }}"
     gpgcheck: no
     reposdir: "{{ package_repos_dir }}"
+  when: ansible_os_family == 'RedHat' or ansible_os_family == 'Suse'
+
+- name: Add package repository (Debian/Ubuntu)
+  apt_repository:
+    repo: "deb [trusted=yes] {{ vprotect_repo }} ./"
+  when: ansible_os_family == 'Debian'
+
+- name: Install python3-apt package (Debian/Ubuntu)
+  apt:
+    name: python3-apt
+    state: latest
+  when: ansible_os_family == 'Debian'
 
 - name: Install expect and firewalld
-  yum:
+  package:
     name: ['expect', 'firewalld']
     state: latest
 
 - name: Install the Server
-  yum:
+  package:
     name: vprotect-server
     state: latest
     update_cache: yes
@@ -146,21 +174,27 @@
     state: started
     enabled: yes
 
+- name: Check if port 8181 is already open
+  command: firewall-cmd --zone=public --query-port=8181/tcp
+  register: firewall_check_port_8181
+  ignore_errors: yes
+
 - name: Firewall - open port 8181
-  firewalld:
-    port: 8181/tcp
-    zone: public
-    permanent: yes
-    immediate: yes
-    state: enabled
+  command: firewall-cmd --zone=public --add-port=8181/tcp --permanent
+  when: firewall_check_port_8181.rc != 0
+  register: firewall_open_port_8181
+  notify: Reload firewalld
+
+- name: Check if port forwarding from 443 to 8181 is already set
+  command: firewall-cmd --zone=public --query-rich-rule='rule family=ipv4 forward-port port=443 protocol=tcp to-port=8181'
+  register: firewall_check_forward_443_to_8181
+  ignore_errors: yes
 
 - name: Firewall - redirect port 443 to 8181
-  firewalld:
-    rich_rule: "rule family=ipv4 forward-port port=443 protocol=tcp to-port=8181"
-    zone: public
-    permanent: yes
-    immediate: yes
-    state: enabled
+  command: firewall-cmd --zone=public --add-rich-rule='rule family=ipv4 forward-port port=443 protocol=tcp to-port=8181' --permanent
+  when: firewall_check_forward_443_to_8181.rc != 0
+  register: firewall_redirect_port_443_to_8181
+  notify: Reload firewalld
 
 - name: Login to the Server
   uri:
