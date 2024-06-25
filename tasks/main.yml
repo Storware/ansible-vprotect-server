@@ -149,7 +149,7 @@
 - name: SSL - update keystore path (Quarkus)
   lineinfile:
     path: /opt/vprotect/server/quarkus.properties
-    line: 'javax.net.ssl.keyStore={{ ssl_keystore }}'
+    line: 'quarkus.http.ssl.certificate.key-store-file={{ ssl_keystore }}'
     regexp: '^#?(quarkus.http.ssl.certificate.key-store-file=.*)'
   when: quarkus_file.stat.exists
 
