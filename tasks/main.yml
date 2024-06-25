@@ -150,7 +150,7 @@
   lineinfile:
     path: /opt/vprotect/server/quarkus.properties
     line: 'javax.net.ssl.keyStore={{ ssl_keystore }}'
-    regexp: '^#?(javax.net.ssl.keyStore=.*)'
+    regexp: '^#?(quarkus.http.ssl.certificate.key-store-file=.*)'
   when: quarkus_file.stat.exists
 
 - name: Changing ownership of the files in the installation directory
