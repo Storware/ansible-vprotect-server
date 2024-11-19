@@ -110,7 +110,7 @@
 
 - name: Configure the Server
   shell: |
-    set timeout 10
+    set timeout 60
     spawn vprotect-server-configure
     expect "Set MySQL root password: "
     send "{{ db_pass }}\n"
