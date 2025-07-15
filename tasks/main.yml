@@ -2,8 +2,13 @@
 
 - name: Set the Server FQDN variable for the server
   set_fact:
-    server_fqdn: "{{ ansible_nodename }}"
+    server_fqdn: "{{ ansible_fqdn }}"
   when: server_fqdn is undefined
+
+- name: Fail if server_fqdn is not a valid FQDN
+  fail:
+    msg: "'{{ server_fqdn }}' is not a valid FQDN. Please use a fully qualified domain name, such as 'server.example.com', instead of a short hostname like 'server'"
+  when: server_fqdn is not match('^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$')
 
 - name: Set the Server FQDN variable for the nodes
   set_fact:
