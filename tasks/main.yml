@@ -2,7 +2,7 @@
 
 - name: Set the Server FQDN variable for the server
   set_fact:
-    server_fqdn: "{{ ansible_fqdn }}"
+    server_fqdn: "{{ ansible_nodename }}"
   when: server_fqdn is undefined
 
 - name: Fail if server_fqdn is not a valid FQDN
