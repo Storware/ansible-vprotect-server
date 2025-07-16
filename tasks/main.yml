@@ -5,7 +5,7 @@
     server_fqdn: "{{ ansible_nodename }}"
   when: server_fqdn is undefined
 
-- name: Fail if server_fqdn is not a valid FQDN
+- name: Fail if Server FQDN variable is not a valid FQDN
   fail:
     msg: "'{{ server_fqdn }}' is not a valid FQDN. Please configure hostname as a FQDN, such as 'server.example.com', instead of a short hostname like 'server'"
   when: server_fqdn is not match('^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$')
